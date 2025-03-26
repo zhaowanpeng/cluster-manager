@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"zhaowanpeng/cluster-manager/internal/utils"
 	"zhaowanpeng/cluster-manager/model"
 
 	"github.com/spf13/cobra"
@@ -32,8 +31,8 @@ func listFunc(cmd *cobra.Command, args []string) {
 			ipList = append(ipList, c.IP)
 		}
 
-		compressed := utils.CompressIPs(ipList)
-		fmt.Printf("%s\t%s\t%s\t%s\n", grp, compressed, clients[0].User, clients[0].Password)
+		// compressed := utils.CompressIPs(ipList)
+		// fmt.Printf("%s\t%s\t%s\t%s\n", grp, compressed, clients[0].User, clients[0].Password)
 	}
 
 }

@@ -1,47 +1,49 @@
 package model
 
 import (
-	"log"
-	"sync"
+	"fmt"
+	"os"
+	"path/filepath"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-var (
-	DB   *gorm.DB
-	once sync.Once
-)
+// DB 是全局数据库连接
+var DB *gorm.DB
 
-func InitDB() {
-	var err error
-	DB, err = gorm.Open(sqlite.Open("data.db"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent), // 禁用日志输出
-	})
-
+// InitDB 初始化数据库连接
+func InitDB() error {
+	// 获取用户主目录
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		panic("failed to connect database")
+		return fmt.Errorf("无法获取用户主目录: %v", err)
 	}
 
-	// 自动迁移模型
-	err = DB.AutoMigrate(&ShellClient{})
-	if err != nil {
-		panic("failed to migrate database")
+	// 创建应用数据目录
+	appDir := filepath.Join(homeDir, ".cluster-manager")
+	if err := os.MkdirAll(appDir, 0755); err != nil {
+		return fmt.Errorf("无法创建应用数据目录: %v", err)
 	}
-}
 
-// GetDB 返回数据库单例
-func GetDBSingle() *gorm.DB {
-	once.Do(func() {
-		var err error
-		DB, err = gorm.Open(sqlite.Open("shell_client.db"), &gorm.Config{})
-		if err != nil {
-			log.Fatalf("数据库连接失败: %v", err)
-		}
-		if err := DB.AutoMigrate(&ShellClient{}); err != nil {
-			log.Fatalf("数据库迁移失败: %v", err)
-		}
+	// 数据库文件路径
+	dbPath := filepath.Join(appDir, "cluster.db")
+
+	// 连接数据库
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
 	})
-	return DB
+	if err != nil {
+		return fmt.Errorf("无法连接数据库: %v", err)
+	}
+
+	// 自动迁移表结构
+	err = db.AutoMigrate(&Node{}, &Group{}, &Session{}, &Command{}, &CommandOutput{})
+	if err != nil {
+		return fmt.Errorf("自动迁移表结构失败: %v", err)
+	}
+
+	DB = db
+	return nil
 }

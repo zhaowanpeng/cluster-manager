@@ -3,10 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"sync"
 	"time"
 
-	"zhaowanpeng/cluster-manager/internal/types"
 	"zhaowanpeng/cluster-manager/internal/utils"
 	"zhaowanpeng/cluster-manager/model"
 
@@ -59,8 +57,8 @@ func addFunc(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	var wg sync.WaitGroup
-	resultChan := make(chan types.Result, len(ips))
+	//var wg sync.WaitGroup
+	//resultChan := make(chan types.Result, len(ips))
 
 	for _, ip := range ips {
 
@@ -92,31 +90,31 @@ func addFunc(cmd *cobra.Command, args []string) {
 			model.DB.Save(&client)
 		}
 
-		wg.Add(1)
+		//wg.Add(1)
 
 		// 启动协程模拟登录验证
-		go func(ip string) {
-			defer wg.Done()
-			// 模拟验证延时
+		// go func(ip string) {
+		// 	defer wg.Done()
+		// 	// 模拟验证延时
 
-			ssh_client, status := utils.SSH_Check(ip, addPort, addUser, pwd, time.Duration(timeoutSeconds)*time.Second)
+		// 	ssh_client, status := utils.SSH_Check(ip, addPort, addUser, pwd, time.Duration(timeoutSeconds)*time.Second)
 
-			resultChan <- types.Result{IP: ip, Msg: status}
+		// 	resultChan <- types.Result{IP: ip, Msg: status}
 
-			if ssh_client != nil {
-				model.DB.Model(&model.ShellClient{}).
-					Where("ip = ? AND port = ? AND user = ? AND `group` = ?", ip, addPort, addUser, addGroup).
-					Update("usable", true)
-				fmt.Println(ip, "success")
-			} else {
-				fmt.Println(ip, status)
-			}
+		// 	if ssh_client != nil {
+		// 		model.DB.Model(&model.ShellClient{}).
+		// 			Where("ip = ? AND port = ? AND user = ? AND `group` = ?", ip, addPort, addUser, addGroup).
+		// 			Update("usable", true)
+		// 		fmt.Println(ip, "success")
+		// 	} else {
+		// 		fmt.Println(ip, status)
+		// 	}
 
-		}(ip)
+		// }(ip)
 	}
 
-	wg.Wait()
-	close(resultChan)
+	// wg.Wait()
+	// close(resultChan)
 
 	fmt.Println("所有节点添加完毕")
 }

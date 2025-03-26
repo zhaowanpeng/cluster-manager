@@ -31,4 +31,5 @@ func init() {
 	rootCmd.AddCommand(deleteCmd)
 	rootCmd.AddCommand(execCmd)
 	rootCmd.AddCommand(scpCmd)
+	rootCmd.AddCommand(groupCmd)
 }
