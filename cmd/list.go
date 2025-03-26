@@ -17,19 +17,23 @@ var listCmd = &cobra.Command{
 
 func listFunc(cmd *cobra.Command, args []string) {
 	var groups []string
+
 	if err := model.DB.Model(&model.ShellClient{}).Distinct().Pluck("`group`", &groups).Error; err != nil {
 		fmt.Printf("获取分组失败: %v\n", err)
 		return
 	}
+
 	for _, grp := range groups {
 		var clients []model.ShellClient
 		model.DB.Where("`group` = ?", grp).Find(&clients)
+
 		var ipList []string
 		for _, c := range clients {
 			ipList = append(ipList, c.IP)
 		}
+
 		compressed := utils.CompressIPs(ipList)
-		fmt.Printf("%s(%s)\n", grp, compressed)
+		fmt.Printf("%s\t%s\t%s\t%s\n", grp, compressed, clients[0].User, clients[0].Password)
 	}
 
 }

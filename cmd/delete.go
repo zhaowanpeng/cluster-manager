@@ -18,7 +18,10 @@ var (
 var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "删除分组或删除分组中的部分记录",
+	Long:  "Example：\n  clush delete -g group1 -n 192.168.108.1-100 -o 22 -u root -p",
+	Args:  cobra.MaximumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+
 		if delGroup == "" {
 			fmt.Println("必须指定分组(-g)")
 			return

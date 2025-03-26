@@ -45,6 +45,17 @@ func execFunc(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	if execNodes != "" {
+
+		fmt.Println("user")
+		fmt.Println("pwd")
+		fmt.Println("port")
+	}
+
+	for _, clt := range nodes {
+		fmt.Println(clt.IP)
+	}
+
 	// if execNodes != "" {
 	// 	ips, err := utils.ParseIPList(execNodes)
 	// 	if err != nil {
@@ -86,7 +97,7 @@ func interactiveMode(nodes []model.ShellClient) {
 	for {
 		line, err := rl.Readline()
 		if err != nil {
-			fmt.Printf("读取输入失败: %v\n", err)
+			fmt.Printf("bye ~")
 			break
 		}
 		command := strings.TrimSpace(line)
@@ -94,7 +105,7 @@ func interactiveMode(nodes []model.ShellClient) {
 			break
 		}
 		fmt.Println(command)
-		if command == "00" {
+		if command == "ls -l" {
 			executeCommandOnNodes(nodes, command)
 		}
 

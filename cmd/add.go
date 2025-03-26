@@ -65,10 +65,12 @@ func addFunc(cmd *cobra.Command, args []string) {
 	for _, ip := range ips {
 
 		var client model.ShellClient
-		res := model.DB.Where("`group` = ? AND ip = ? AND port = ? AND user = ?", addGroup, ip, addPort).First(&client)
+
+		res := model.DB.Where("`group` = ? AND ip = ? AND port = ? AND user = ?", addGroup, ip, addPort, addUser).First(&client)
 		now := time.Now()
-		//新增
-		if res.Error != nil {
+		// fmt.Println(res.RowsAffected, client.Password)
+		if res.RowsAffected == 0 {
+			// fmt.Println(ip, "新增")
 			newClient := model.ShellClient{
 				ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
 				IP:          ip,
@@ -83,6 +85,7 @@ func addFunc(cmd *cobra.Command, args []string) {
 			}
 			model.DB.Create(&newClient)
 		} else {
+			// fmt.Println(ip, "已经存在")
 			//修改
 			client.Password = pwd
 			client.AddAt = now
@@ -96,11 +99,11 @@ func addFunc(cmd *cobra.Command, args []string) {
 			defer wg.Done()
 			// 模拟验证延时
 
-			client, status := utils.SSH_Check(ip, addPort, addUser, pwd, time.Duration(timeoutSeconds)*time.Second)
+			ssh_client, status := utils.SSH_Check(ip, addPort, addUser, pwd, time.Duration(timeoutSeconds)*time.Second)
 
 			resultChan <- types.Result{IP: ip, Msg: status}
 
-			if client != nil {
+			if ssh_client != nil {
 				model.DB.Model(&model.ShellClient{}).
 					Where("ip = ? AND port = ? AND user = ? AND `group` = ?", ip, addPort, addUser, addGroup).
 					Update("usable", true)

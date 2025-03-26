@@ -10,14 +10,15 @@ import (
 // ParseIPList 将类似 "192.168.108.1-100,192.168.108.200" 的字符串解析为 IP 列表
 func ParseIPList(ipStr string) ([]string, error) {
 	var ips []string
-	parts := strings.Split(ipStr, ",")
+	parts := strings.Split(ipStr, ",") //192.168.108.1-100,192.168.108.200
+
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
 		}
 		// 判断是否包含范围
-		if strings.Contains(part, "-") {
+		if strings.Contains(part, "-") { //192.168.108.1-100
 			octets := strings.Split(part, ".")
 			if len(octets) != 4 {
 				return nil, fmt.Errorf("无效的 IP 格式: %s", part)
@@ -50,6 +51,7 @@ func ParseIPList(ipStr string) ([]string, error) {
 			ips = append(ips, part)
 		}
 	}
+
 	return ips, nil
 }
 
