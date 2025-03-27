@@ -9,11 +9,19 @@ import (
 
 // rootCmd 是整个应用的根命令
 var rootCmd = &cobra.Command{
-	Use:   "go-clush",
-	Short: "A parallel command tool for multi-host operations",
-	Long:  "go-clush 是一个用于在多个远程节点上并行执行命令、拷贝文件等操作的命令行工具，仿照 clush 的风格设计。",
+	Use:   "talko",
+	Short: "智能Shell助手与集群管理工具",
+	Long: `
+OctoShell (octosh) - 智能化多节点管理工具
+如同章鱼通过一个大脑控制多个触手，OctoShell让您可以同时控制多个远程节点，
+高效完成集群命令执行、文件分发、状态监控等运维工作。`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("请使用 --help 查看可用命令")
+	},
+	Version: "0.0.1",
+	// 禁用自动生成的命令
+	CompletionOptions: cobra.CompletionOptions{
+		DisableDefaultCmd: true,
 	},
 }
 
@@ -26,10 +34,11 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(addCmd)
-	rootCmd.AddCommand(listCmd)
-	rootCmd.AddCommand(deleteCmd)
-	rootCmd.AddCommand(execCmd)
-	rootCmd.AddCommand(scpCmd)
+	// rootCmd.AddCommand(addCmd)
+	// rootCmd.AddCommand(listCmd)
+	// rootCmd.AddCommand(deleteCmd)
 	rootCmd.AddCommand(groupCmd)
+	rootCmd.AddCommand(execCmd)
+	// rootCmd.AddCommand(scpCmd)
+
 }

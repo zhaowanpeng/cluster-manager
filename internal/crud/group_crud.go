@@ -172,13 +172,23 @@ func AddNodesToGroup(groupName string, ips []string, port int, user, password, d
 				Description: description,
 			}
 
-			model.DB.Create(&newNode)
+			result = model.DB.Create(&newNode)
 
-			resultChan <- types.Result{
-				IP:      ip,
-				Msg:     status,
-				Success: isConnected,
+			if result.Error != nil {
+				resultChan <- types.Result{
+					IP:      ip,
+					Msg:     fmt.Sprintf("数据库错误: %v", result.Error),
+					Success: false,
+				}
+
+			} else {
+				resultChan <- types.Result{
+					IP:      ip,
+					Msg:     status,
+					Success: true,
+				}
 			}
+
 		}(ip)
 	}
 

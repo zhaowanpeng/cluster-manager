@@ -152,6 +152,7 @@ func execFunc(cmd *cobra.Command, args []string) {
 	if len(args) > 0 {
 		fmt.Println("单次模式")
 	} else {
+		//后期移除
 		interactiveMode(nodes)
 	}
 }
@@ -178,7 +179,7 @@ func execGroupFunc(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	color.Green("已连接到 '%s' 组的 %d 个节点", groupName, len(nodes))
+	color.Green("已找到 '%s' 组的 %d 个节点", groupName, len(nodes))
 	color.Yellow("进入交互式模式，输入 'exit' 退出")
 
 	// 进入交互模式，同样需要使用 Node 结构
@@ -232,6 +233,7 @@ func interactiveGroupSession(nodes []model.Node, groupName string) {
 			break
 		}
 
+		// 去掉命令前后空白
 		command := strings.TrimSpace(line)
 		if command == "" {
 			continue
@@ -451,6 +453,7 @@ func saveCommandResults(groupName, command string, results map[string]string) {
 	color.Green("命令结果已保存到: %s", resultDir)
 }
 
+// 交互式模式（后期移除）
 func interactiveMode(nodes []model.ShellClient) {
 	rl, err := readline.New(">>> ")
 	if err != nil {
@@ -478,6 +481,7 @@ func interactiveMode(nodes []model.ShellClient) {
 	}
 }
 
+// 执行命令（后期移除）
 func executeCommandOnNodes(nodes []model.ShellClient, command string) {
 	var wg sync.WaitGroup
 	// 为了方便显示，我们给每个节点生成 g1(), g2() 等标识

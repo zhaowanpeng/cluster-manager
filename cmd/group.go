@@ -64,7 +64,7 @@ func init() {
 	groupCmd.AddCommand(groupShowCmd)
 
 	// 添加 group 命令到根命令
-	rootCmd.AddCommand(groupCmd)
+	// rootCmd.AddCommand(groupCmd)
 
 	// 设置 add 命令的参数
 	groupAddCmd.Flags().StringVarP(&groupName, "name", "n", "", "组名称")
@@ -177,7 +177,7 @@ func groupAddFunc(cmd *cobra.Command, args []string) {
 	// 获取密码
 	var password string
 	if !groupPassword {
-		fmt.Print("密码 [输入以安全方式输入]: ")
+		fmt.Print("密码: ")
 		bytePwd, err := term.ReadPassword(int(syscall.Stdin))
 		fmt.Println()
 		if err != nil {
@@ -252,38 +252,40 @@ func groupAddFunc(cmd *cobra.Command, args []string) {
 	}
 
 	// 询问是否为失败的节点创建临时组
-	if len(failureMap) > 0 {
-		fmt.Print("为失败的节点创建临时组? [Y/n]: ")
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			color.Red("读取输入失败: %v", err)
-			return
-		}
-		input = strings.ToLower(strings.TrimSpace(input))
-		if input == "y" || input == "yes" || input == "" {
-			for errMsg, failedIPs := range failureMap {
-				// 创建临时组名称
-				tmpGroupName := fmt.Sprintf("tmp-%s-%s",
-					strings.ReplaceAll(strings.ToLower(errMsg[:10]), " ", "-"),
-					utils.GenerateShortID())
+	/*
+		if len(failureMap) > 0 {
+			fmt.Print("为失败的节点创建临时组? [Y/n]: ")
+			input, err := reader.ReadString('\n')
+			if err != nil {
+				color.Red("读取输入失败: %v", err)
+				return
+			}
+			input = strings.ToLower(strings.TrimSpace(input))
+			if input == "y" || input == "yes" || input == "" {
+				for errMsg, failedIPs := range failureMap {
+					// 创建临时组名称
+					tmpGroupName := fmt.Sprintf("tmp-%s-%s",
+						strings.ReplaceAll(strings.ToLower(errMsg[:10]), " ", "-"),
+						utils.GenerateShortID())
 
-				err = crud.AddGroup(tmpGroupName, fmt.Sprintf("自动创建的临时组: %s", errMsg))
-				if err != nil {
-					color.Red("创建临时组失败: %v", err)
-					continue
+					err = crud.AddGroup(tmpGroupName, fmt.Sprintf("自动创建的临时组: %s", errMsg))
+					if err != nil {
+						color.Red("创建临时组失败: %v", err)
+						continue
+					}
+
+					// 添加失败的节点到临时组
+					_, err = crud.AddNodesToGroup(tmpGroupName, failedIPs, groupPort, groupUser, password, fmt.Sprintf("自动添加: %s", errMsg))
+					if err != nil {
+						color.Red("添加节点到临时组失败: %v", err)
+						continue
+					}
+
+					color.Yellow("临时组 '%s' 已创建，包含 %d 个节点", tmpGroupName, len(failedIPs))
 				}
-
-				// 添加失败的节点到临时组
-				_, err = crud.AddNodesToGroup(tmpGroupName, failedIPs, groupPort, groupUser, password, fmt.Sprintf("自动添加: %s", errMsg))
-				if err != nil {
-					color.Red("添加节点到临时组失败: %v", err)
-					continue
-				}
-
-				color.Yellow("临时组 '%s' 已创建，包含 %d 个节点", tmpGroupName, len(failedIPs))
 			}
 		}
-	}
+	*/
 
 	color.Green("组 '%s' 已创建，包含 %d 个节点", groupName, successCount)
 }
