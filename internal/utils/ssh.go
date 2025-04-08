@@ -16,28 +16,34 @@ func SSH_Check(ip string, port int, user string, pwd string, timeout time.Durati
 	config := &ssh.ClientConfig{
 		User:            user,
 		Auth:            []ssh.AuthMethod{ssh.Password(pwd)},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), //
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         timeout,
 	}
 
-	//检查端口是否可到达
+	// 检查端口是否可到达
 	conn, err := net.DialTimeout("tcp", addr, timeout)
-
 	if err != nil {
 		return nil, err.Error()
 	}
-
 	defer conn.Close()
 
-	//ssh
+	// 尝试SSH连接
 	sshConn, chans, reqs, err := ssh.NewClientConn(conn, addr, config)
 	if err != nil {
 		return nil, err.Error()
 	}
-	client := ssh.NewClient(sshConn, chans, reqs)
-	defer client.Close()
 
-	// 否则返回默认的成功提示
+	// 创建客户端并返回（不要在这里关闭它）
+	client := ssh.NewClient(sshConn, chans, reqs)
+
+	// 尝试创建会话来验证连接是否真的有效
+	session, err := client.NewSession()
+	if err != nil {
+		client.Close()
+		return nil, fmt.Sprintf("Failed to create session: %s", err.Error())
+	}
+	session.Close()
+
 	return client, "ssh success"
 }
 

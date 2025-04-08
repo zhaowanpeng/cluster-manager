@@ -207,6 +207,9 @@ func interactiveGroupSession(nodes []model.Node, groupName string) {
 
 	color.Green("所有连接已准备就绪")
 
+	// Use groupName parameter when displaying information
+	color.Green("已连接到组 '%s' 的所有节点", groupName)
+
 	// 分组显示节点信息
 	nodesBySubgroup := groupNodesByIP(nodes)
 	color.Cyan("已连接节点:")

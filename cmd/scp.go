@@ -52,11 +52,11 @@ func scpFunc(cmd *cobra.Command, args []string) {
 		fmt.Println(clt.IP)
 	}
 
-	if scpRecursive {
-		//文件夹
-	} else {
-		//文件
-	}
+	// if scpRecursive {
+	// 	//文件夹
+	// } else {
+	// 	//文件
+	// }
 
 	// if scpNodes != "" {
 	// 	ips, err := utils.ParseIPList(scpNodes)

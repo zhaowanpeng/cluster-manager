@@ -9,24 +9,14 @@ import (
 	"zhaowanpeng/cluster-manager/model"
 )
 
-// ListGroups 列出所有组
-func ListGroups() ([]model.Group, error) {
-	var groups []model.Group
-	result := model.DB.Find(&groups)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return groups, nil
-}
-
 // AddGroup 添加新组
-func AddGroup(name, desc string) error {
+func AddGroup(name, desc, user string, tmp bool) error {
 	var group model.Group
 
 	// 检查组是否已存在
 	result := model.DB.Where("`name` = ?", name).First(&group)
 	if result.RowsAffected > 0 {
-		return fmt.Errorf("组 '%s' 已存在", name)
+		return fmt.Errorf("group '%s' already exists", name)
 	}
 
 	// 创建新组
@@ -36,8 +26,8 @@ func AddGroup(name, desc string) error {
 		Description: desc,
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		User:        "",
-		Tmp:         false,
+		User:        user,
+		Tmp:         tmp,
 	}
 
 	result = model.DB.Create(&newGroup)
@@ -48,6 +38,16 @@ func AddGroup(name, desc string) error {
 	return nil
 }
 
+// ListGroups 列出所有组
+func ListGroups() ([]model.Group, error) {
+	var groups []model.Group
+	result := model.DB.Find(&groups)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return groups, nil
+}
+
 // RemoveGroup 删除组
 func RemoveGroup(name string) error {
 	var group model.Group
@@ -55,7 +55,7 @@ func RemoveGroup(name string) error {
 	// 检查组是否存在
 	result := model.DB.Where("`name` = ?", name).First(&group)
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("组 '%s' 不存在", name)
+		return fmt.Errorf("group '%s' not found", name)
 	}
 
 	// 删除组中的所有节点
@@ -79,7 +79,7 @@ func GetGroup(name string) (model.Group, error) {
 
 	result := model.DB.Where("`name` = ?", name).First(&group)
 	if result.RowsAffected == 0 {
-		return group, fmt.Errorf("组 '%s' 不存在", name)
+		return group, fmt.Errorf("group '%s' not found", name)
 	}
 
 	return group, nil
@@ -106,12 +106,12 @@ func GetNodesInGroup(groupName string) ([]model.Node, error) {
 }
 
 // AddNodesToGroup 添加节点到组
-func AddNodesToGroup(groupName string, ips []string, port int, user, password, description string) ([]types.Result, error) {
+func AddOrUpdateNodes(groupName string, ips []string, port int, user, password, description string) ([]types.Result, error) {
 	// 检查组是否存在
 	var group model.Group
 	result := model.DB.Where("`name` = ?", groupName).First(&group)
 	if result.RowsAffected == 0 {
-		return nil, fmt.Errorf("组 '%s' 不存在", groupName)
+		return nil, fmt.Errorf("group '%s' not found", groupName)
 	}
 
 	var wg sync.WaitGroup
@@ -140,6 +140,9 @@ func AddNodesToGroup(groupName string, ips []string, port int, user, password, d
 			)
 
 			isConnected := sshClient != nil
+			if sshClient != nil {
+				sshClient.Close() // 确保关闭客户端
+			}
 
 			// 如果节点已存在，更新它
 			if result.RowsAffected > 0 {
@@ -160,7 +163,7 @@ func AddNodesToGroup(groupName string, ips []string, port int, user, password, d
 
 			// 创建新节点
 			newNode := model.Node{
-				ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
+				ID:          fmt.Sprintf("%s-%s", groupName, ip),
 				IP:          ip,
 				Port:        port,
 				User:        user,
@@ -177,7 +180,7 @@ func AddNodesToGroup(groupName string, ips []string, port int, user, password, d
 			if result.Error != nil {
 				resultChan <- types.Result{
 					IP:      ip,
-					Msg:     fmt.Sprintf("数据库错误: %v", result.Error),
+					Msg:     fmt.Sprintf("Database error: %v", result.Error),
 					Success: false,
 				}
 
