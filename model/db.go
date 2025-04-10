@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite" // 使用纯 Go 实现的 SQLite 驱动
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -30,7 +30,7 @@ func InitDB() error {
 	// 数据库文件路径
 	dbPath := filepath.Join(appDir, "cluster.db")
 
-	// 连接数据库
+	// 连接数据库 - 使用纯 Go 实现的 SQLite 驱动
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
