@@ -26,7 +26,15 @@ func (sm *SessionManager) GetOrCreateSession(node model.Node) (*NodeSession, err
 
 	key := fmt.Sprintf("%s:%d:%s", node.IP, node.Port, node.User)
 	if session, exists := sm.sessions[key]; exists {
-		return session, nil
+		// 验证会话是否仍然有效
+		err := session.Ping()
+		if err == nil {
+			return session, nil
+		}
+
+		// 会话失效，需要关闭并重建
+		session.Close()
+		delete(sm.sessions, key)
 	}
 
 	// 创建新会话

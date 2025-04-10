@@ -175,6 +175,17 @@ func StartGroupExec(options ExecOptions) error {
 	}
 	defer rl.Close()
 
+	// 命令超时设置
+	timeout := options.Timeout
+
+	// 常见命令的快速超时时间，避免无效等待
+	fastCmds := map[string]bool{
+		"whoami": true, "hostname": true, "uptime": true,
+		"date": true, "pwd": true, "id": true, "echo": true,
+		"ls": true, "ps": true, "df": true, "free": true,
+		"uname": true, "which": true, "type": true,
+	}
+
 	// 9. 交互式循环
 	for {
 		line, err := rl.Readline()
@@ -189,15 +200,11 @@ func StartGroupExec(options ExecOptions) error {
 			continue
 		}
 
-		// 处理特殊命令，只有ctrl+q退出
-		if command == "ctrl+q" {
+		// 处理特殊命令
+		if command == "exit" || command == "quit" || command == "ctrl+q" {
 			color.Green("退出会话")
 			break
 		}
-		// if command == "exit" || command == "quit" {
-		// 	color.Green("退出会话")
-		// 	break
-		// }
 
 		if command == "nodes" {
 			// 显示当前连接的节点
@@ -205,8 +212,19 @@ func StartGroupExec(options ExecOptions) error {
 			continue
 		}
 
+		// 对于一些基本命令使用更短的超时
+		cmdTimeout := timeout
+		cmdParts := strings.Fields(command)
+		if len(cmdParts) > 0 {
+			baseCmd := cmdParts[0]
+			if fastCmds[baseCmd] {
+				cmdTimeout = 5 * time.Second // 快速命令使用5秒超时
+			}
+		}
+
 		// 执行命令并收集结果
-		results := executeCommandOnNodes(sessionManager, nodes, command, options.Timeout)
+		// results := executeCommandOnNodes(sessionManager, nodes, command, options.Timeout)
+		results := executeCommandOnNodes(sessionManager, nodes, command, cmdTimeout)
 
 		// 显示结果
 		if options.MergeOutput {
@@ -288,24 +306,52 @@ func displayResults(nodesBySubnet map[string][]model.Node, results map[string]Ex
 
 			if !result.Success {
 				errorDesc := result.Error.Error()
-				if strings.Contains(errorDesc, "exited with status 127") {
-					color.New(color.FgRed).Printf("[%s] 命令未找到: %s\n", node.IP, errorDesc)
+				if strings.Contains(errorDesc, "命令退出码:") {
+					// 命令执行了但返回非零退出码
+					exitCode := strings.TrimPrefix(errorDesc, "命令退出码: ")
+					color.New(color.FgYellow).Printf("[%s] 退出码 %s\n", node.IP, exitCode)
+					if result.Output != "" {
+						fmt.Printf("%s\n", result.Output)
+					}
+				} else if strings.Contains(errorDesc, "command not found") || strings.Contains(errorDesc, "not found") {
+					color.New(color.FgRed).Printf("[%s] 命令未找到\n", node.IP)
+					if result.Output != "" {
+						fmt.Printf("    %s\n", result.Output)
+					}
 				} else if strings.Contains(errorDesc, "permission denied") {
-					color.New(color.FgRed).Printf("[%s] 权限拒绝: %s\n", node.IP, errorDesc)
+					color.New(color.FgRed).Printf("[%s] 权限拒绝\n", node.IP)
+					if result.Output != "" {
+						fmt.Printf("    %s\n", result.Output)
+					}
 				} else if strings.Contains(errorDesc, "connection refused") {
-					color.New(color.FgRed).Printf("[%s] 连接被拒绝: %s\n", node.IP, errorDesc)
-				} else if strings.Contains(errorDesc, "timeout") {
-					color.New(color.FgRed).Printf("[%s] 执行超时: %s\n", node.IP, errorDesc)
+					color.New(color.FgRed).Printf("[%s] 连接被拒绝\n", node.IP)
+				} else if strings.Contains(errorDesc, "命令已完成但处理超时") {
+					// 命令已完成但提取输出超时
+					color.New(color.FgYellow).Printf("[%s] 命令已完成但返回处理超时\n", node.IP)
+					if result.Output != "" {
+						fmt.Printf("%s\n", result.Output)
+					}
+				} else if strings.Contains(errorDesc, "timeout") || strings.Contains(errorDesc, "超时") {
+					// 命令执行真正超时
+					color.New(color.FgRed).Printf("[%s] 命令执行超时\n", node.IP)
+					if result.Output != "" {
+						fmt.Printf("%s\n", result.Output)
+					}
 				} else {
-					color.New(color.FgRed).Printf("[%s] %s\n", node.IP, errorDesc)
-				}
-
-				if result.Output != "" {
-					fmt.Printf("    错误输出: %s\n", result.Output)
+					color.New(color.FgRed).Printf("[%s] 错误: %s\n", node.IP, errorDesc)
+					if result.Output != "" {
+						fmt.Printf("    %s\n", result.Output)
+					}
 				}
 			} else {
-				color.New(color.FgGreen).Printf("[%s] ", node.IP)
-				fmt.Printf("%s\n", result.Output)
+				// 命令执行成功
+				if result.Output == "" {
+					// 如果没有输出，显示成功标记
+					color.New(color.FgGreen).Printf("[%s] 成功 (无输出)\n", node.IP)
+				} else {
+					color.New(color.FgGreen).Printf("[%s]\n", node.IP)
+					fmt.Printf("%s\n", result.Output)
+				}
 			}
 		}
 	}

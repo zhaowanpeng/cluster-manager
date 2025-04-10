@@ -38,7 +38,7 @@ func init() {
 	execUser = "root"
 	execPassword = ""
 	groupExecCmd.Flags().StringVarP(&execGroupName, "name", "n", "", "组名称")
-	groupExecCmd.Flags().IntVarP(&execTimeout, "timeout", "t", 30, "命令执行超时时间（秒）")
+	groupExecCmd.Flags().IntVarP(&execTimeout, "timeout", "t", 60, "命令执行超时时间（秒）")
 	groupExecCmd.Flags().StringVarP(&execExcludeNodes, "exclude", "e", "", "排除节点，支持范围表示法，如 192.168.1.1-5,192.168.1.10")
 	groupExecCmd.Flags().StringVarP(&execAddNodes, "add", "a", "", "额外添加节点，支持范围表示法")
 	groupExecCmd.Flags().BoolVarP(&execMergeOutput, "merge", "m", false, "合并相同输出")
@@ -102,6 +102,9 @@ func execFunc(cmd *cobra.Command, args []string) {
 		execPassword = string(bytePwd)
 
 	}
+
+	// 提示用户设置的超时时间
+	color.Cyan("命令执行超时设置为 %d 秒", execTimeout)
 
 	// 创建执行选项
 	options := session.ExecOptions{
