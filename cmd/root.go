@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"zhaowanpeng/cluster-manager/cmd/group"
+
 	"github.com/spf13/cobra"
 )
 
@@ -37,8 +39,8 @@ func init() {
 	// rootCmd.AddCommand(addCmd)
 	// rootCmd.AddCommand(listCmd)
 	// rootCmd.AddCommand(deleteCmd)
-	rootCmd.AddCommand(groupCmd)
-	rootCmd.AddCommand(execCmd)
+	rootCmd.AddCommand(group.GroupCmd)
+	// rootCmd.AddCommand(execCmd)
 	// rootCmd.AddCommand(scpCmd)
 
 }
